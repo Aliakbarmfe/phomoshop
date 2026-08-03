@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to PHOMO SHOP</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- خط نورانی بالای صفحه -->
+  <div class="glowing-line"></div>
+
+  <!-- هدر -->
+  <header>
+    <div class="site-title">Welcome to PHOMO SHOP</div>
+    <button class="btn" id="adminLoginBtn">ورود مدیر</button>
+  </header>
+
+  <!-- لیست محصولات -->
+  <main>
+    <div class="products-container" id="productsList">
+      <!-- محصولات از فایربیس بارگذاری می‌شوند -->
+    </div>
+  </main>
+
+  <!-- پاپ‌آپ ورود مدیر -->
+  <div class="modal-overlay" id="loginModal">
+    <div class="modal-content">
+      <div class="modal-header">ورود به پنل مدیریت</div>
+      <div class="form-group">
+        <label>نام کاربری</label>
+        <input type="text" id="loginUser" class="input-field" placeholder="نام کاربری را وارد کنید">
+      </div>
+      <div class="form-group">
+        <label>رمز عبور</label>
+        <input type="password" id="loginPass" class="input-field" placeholder="رمز عبور را وارد کنید">
+      </div>
+      <div class="modal-buttons">
+        <button class="btn" id="closeLoginModal">انصراف</button>
+        <button class="btn" id="submitLogin">ورود</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- پاپ‌آپ اطلاعات محصول -->
+  <div class="modal-overlay" id="productModal">
+    <div class="modal-content">
+      <div class="modal-header" id="modalProdTitle">جزئیات محصول</div>
+      <div id="modalProdDetails"></div>
+      <div class="modal-buttons">
+        <button class="btn" id="closeProdModal">بستن</button>
+        <button class="btn" id="buyBtn">خرید محصول</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- پاپ‌آپ راهنمای خرید -->
+  <div class="modal-overlay" id="buyModal">
+    <div class="modal-content">
+      <div class="modal-header">راهنمای پرداخت و ثبت سفارش</div>
+      <div id="buyInstructions" style="line-height: 1.8; font-size: 0.95rem; text-align: justify;"></div>
+      <div class="modal-buttons">
+        <button class="btn" id="closeBuyModal">متوجه شدم</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- پاپ‌آپ پیام‌ها (Alert) -->
+  <div class="modal-overlay" id="alertModal">
+    <div class="modal-content">
+      <div class="modal-header" id="alertTitle">اطلاعیه</div>
+      <div id="alertMsg" style="text-align: center; font-size: 0.95rem;"></div>
+      <div class="modal-buttons" style="justify-content: center;">
+        <button class="btn" id="closeAlertModal">تایید</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
