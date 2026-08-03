@@ -15,14 +15,12 @@ export default async function handler(req, res) {
   const DB_URL = "https://phop-cccce-default-rtdb.firebaseio.com";
 
   try {
-    // دریافت لیست محصولات
     if (req.method === 'GET') {
       const response = await fetch(`${DB_URL}/products.json`);
       const data = await response.json();
       return res.status(200).json(data || {});
     }
 
-    // افزودن محصول جدید
     if (req.method === 'POST') {
       const product = req.body;
       const response = await fetch(`${DB_URL}/products.json`, {
@@ -34,7 +32,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true, id: data.name });
     }
 
-    // ویرایش محصول
     if (req.method === 'PUT') {
       const { id, ...productData } = req.body;
       await fetch(`${DB_URL}/products/${id}.json`, {
@@ -45,7 +42,6 @@ export default async function handler(req, res) {
       return res.status(200).json({ success: true });
     }
 
-    // حذف محصول
     if (req.method === 'DELETE') {
       const { id } = req.query;
       await fetch(`${DB_URL}/products/${id}.json`, {
