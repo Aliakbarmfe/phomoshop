@@ -2,7 +2,6 @@
 let currentProducts = {};
 let selectedProduct = null;
 
-// توابع کمکی برای پاپ‌آپ‌ها با انیمیشن فد
 function openModal(id) {
   const modal = document.getElementById(id);
   if (modal) modal.classList.add('active');
@@ -23,33 +22,27 @@ document.getElementById('closeAlertModal')?.addEventListener('click', () => {
   closeModal('alertModal');
 });
 
-// تشخیص صفحه فعلی
 const isModeerPage = window.location.pathname.includes('modeer.html');
 
-// --- منطق صفحه مدیریت (modeer.html) ---
+// --- منطق پنل مدیریت ---
 if (isModeerPage) {
-  // بررسی دسترسی مجاز لاگین
   if (sessionStorage.getItem('adminLoggedIn') !== 'true') {
     window.location.href = 'index.html';
   }
 
-  // جلوگیری از برگشت دکمه بک مرورگر/گوشی
   history.pushState(null, null, location.href);
   window.onpopstate = function () {
     history.go(1);
   };
 
-  // خروج از حساب
   document.getElementById('logoutBtn')?.addEventListener('click', () => {
     sessionStorage.removeItem('adminLoggedIn');
     window.location.href = 'index.html';
   });
 
-  // پاپ‌آپ اطلاعات مدیر
   document.getElementById('adminInfoBtn')?.addEventListener('click', () => openModal('adminInfoModal'));
   document.getElementById('closeAdminInfoModal')?.addEventListener('click', () => closeModal('adminInfoModal'));
 
-  // تغییر نام کاربری / رمز عبور
   document.getElementById('saveAdminInfo')?.addEventListener('click', async () => {
     const newUsername = document.getElementById('newAdminUser').value;
     const newPassword = document.getElementById('newAdminPass').value;
@@ -77,7 +70,6 @@ if (isModeerPage) {
     }
   });
 
-  // باز کردن فرم‌های افزودن محصول
   document.getElementById('addProductBtn')?.addEventListener('click', () => openModal('typeSelectModal'));
   document.getElementById('closeTypeModal')?.addEventListener('click', () => closeModal('typeSelectModal'));
 
@@ -93,30 +85,61 @@ if (isModeerPage) {
 
   document.getElementById('closeFormModal')?.addEventListener('click', () => closeModal('productFormModal'));
 
-  // افزودن یا ویرایش محصول
+  // ذخیره محصول با آپلود عکس
   document.getElementById('saveProductBtn')?.addEventListener('click', async () => {
     const editId = document.getElementById('editProductId').value;
     const type = document.getElementById('productType').value;
+    const fileInput = document.getElementById('pImageFile');
+    let imageUrl = document.getElementById('pImageUrl').value;
 
-    const payload = {
-      type,
-      name: document.getElementById('pName').value,
-      origPrice: document.getElementById('pOrigPrice').value,
-      offerPrice: document.getElementById('pOfferPrice').value,
-      desc: document.getElementById('pDesc').value,
-      cardNum: document.getElementById('pCardNum').value,
-      cardName: document.getElementById('pCardName').value,
-      rubikaId: document.getElementById('pRubikaId').value,
-      gameLevel: type === 'game' ? document.getElementById('pGameLevel').value : '',
-      virtualCount: type === 'virtual' ? document.getElementById('pVirtualCount').value : ''
-    };
-
-    if (!payload.name || !payload.offerPrice) {
-      showAlert('خطا', 'نام محصول و قیمت آفر الزامی هستند.');
-      return;
-    }
+    const saveBtn = document.getElementById('saveProductBtn');
+    saveBtn.innerText = 'در حال ثبت...';
+    saveBtn.disabled = true;
 
     try {
+      // آپلود عکس اگر فایل جدید انتخاب شده باشد
+      if (fileInput && fileInput.files[0]) {
+        const file = fileInput.files[0];
+        const base64 = await convertBase64(file);
+        
+        const uploadRes = await fetch('/api/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64 })
+        });
+        const uploadData = await uploadRes.json();
+
+        if (uploadData.success) {
+          imageUrl = uploadData.url;
+        } else {
+          showAlert('خطا', 'آپلود عکس با مشکل مواجه شد.');
+          saveBtn.innerText = editId ? 'ذخیره تغییرات' : 'افزودن محصول';
+          saveBtn.disabled = false;
+          return;
+        }
+      }
+
+      const payload = {
+        type,
+        imageUrl,
+        name: document.getElementById('pName').value,
+        origPrice: document.getElementById('pOrigPrice').value,
+        offerPrice: document.getElementById('pOfferPrice').value,
+        desc: document.getElementById('pDesc').value,
+        cardNum: document.getElementById('pCardNum').value,
+        cardName: document.getElementById('pCardName').value,
+        rubikaId: document.getElementById('pRubikaId').value,
+        gameLevel: type === 'game' ? document.getElementById('pGameLevel').value : '',
+        virtualCount: type === 'virtual' ? document.getElementById('pVirtualCount').value : ''
+      };
+
+      if (!payload.name || !payload.offerPrice) {
+        showAlert('خطا', 'نام محصول و قیمت آفر الزامی هستند.');
+        saveBtn.innerText = editId ? 'ذخیره تغییرات' : 'افزودن محصول';
+        saveBtn.disabled = false;
+        return;
+      }
+
       let res;
       if (editId) {
         payload.id = editId;
@@ -141,18 +164,20 @@ if (isModeerPage) {
       }
     } catch (e) {
       showAlert('خطا', 'ثبت محصول با خطا مواجه شد.');
+    } finally {
+      saveBtn.innerText = editId ? 'ذخیره تغییرات' : 'افزودن محصول';
+      saveBtn.disabled = false;
     }
   });
 
   loadProducts();
 }
 
-// --- منطق صفحه اصلی (index.html) ---
+// --- منطق ویترین اصلی ---
 if (!isModeerPage) {
   document.getElementById('adminLoginBtn')?.addEventListener('click', () => openModal('loginModal'));
   document.getElementById('closeLoginModal')?.addEventListener('click', () => closeModal('loginModal'));
 
-  // بررسی ورود مدیر
   document.getElementById('submitLogin')?.addEventListener('click', async () => {
     const username = document.getElementById('loginUser').value;
     const password = document.getElementById('loginPass').value;
@@ -204,7 +229,7 @@ if (!isModeerPage) {
   loadProducts();
 }
 
-// تابع بارگذاری محصولات از API
+// دریافت لیست محصولات
 async function loadProducts() {
   try {
     const res = await fetch('/api/products');
@@ -227,13 +252,20 @@ async function loadProducts() {
       const card = document.createElement('div');
       card.className = 'product-card';
 
+      const imgTag = prod.imageUrl 
+        ? `<img src="${prod.imageUrl}" style="width: 50px; height: 50px; border-radius: 10px; object-fit: cover; margin-left: 10px;">` 
+        : '';
+
       if (isModeerPage) {
         card.innerHTML = `
-          <div class="product-info">
-            <div class="product-name">${prod.name} (${prod.type === 'game' ? 'بازی' : 'مجازی'})</div>
-            <div class="price-box">
-              <span class="original-price">${prod.origPrice || ''}</span>
-              <span class="offer-price">${prod.offerPrice}</span>
+          <div style="display: flex; align-items: center;">
+            ${imgTag}
+            <div class="product-info">
+              <div class="product-name">${prod.name} (${prod.type === 'game' ? 'بازی' : 'مجازی'})</div>
+              <div class="price-box">
+                <span class="original-price">${prod.origPrice || ''}</span>
+                <span class="offer-price">${prod.offerPrice}</span>
+              </div>
             </div>
           </div>
           <div class="admin-actions">
@@ -243,11 +275,14 @@ async function loadProducts() {
         `;
       } else {
         card.innerHTML = `
-          <div class="product-info">
-            <div class="product-name">${prod.name}</div>
-            <div class="price-box">
-              <span class="original-price">${prod.origPrice || ''}</span>
-              <span class="offer-price">${prod.offerPrice}</span>
+          <div style="display: flex; align-items: center;">
+            ${imgTag}
+            <div class="product-info">
+              <div class="product-name">${prod.name}</div>
+              <div class="price-box">
+                <span class="original-price">${prod.origPrice || ''}</span>
+                <span class="offer-price">${prod.offerPrice}</span>
+              </div>
             </div>
           </div>
         `;
@@ -261,10 +296,20 @@ async function loadProducts() {
   }
 }
 
-// فرم محصول برای افزودن/ویرایش
+// تبدیل تصویر به Base64
+function convertBase64(file) {
+  return new Promise((resolve, reject) => {
+    const fileReader = new FileReader();
+    fileReader.readAsDataURL(file);
+    fileReader.onload = () => resolve(fileReader.result);
+    fileReader.onerror = (error) => reject(error);
+  });
+}
+
 function openProductForm(type, prodId = null) {
   document.getElementById('editProductId').value = prodId || '';
   document.getElementById('productType').value = type;
+  document.getElementById('pImageFile').value = '';
 
   const titleElem = document.getElementById('formModalTitle');
   const btnElem = document.getElementById('saveProductBtn');
@@ -284,6 +329,7 @@ function openProductForm(type, prodId = null) {
     titleElem.innerText = 'ویرایش محصول';
     btnElem.innerText = 'ذخیره تغییرات';
 
+    document.getElementById('pImageUrl').value = p.imageUrl || '';
     document.getElementById('pName').value = p.name || '';
     document.getElementById('pOrigPrice').value = p.origPrice || '';
     document.getElementById('pOfferPrice').value = p.offerPrice || '';
@@ -297,6 +343,7 @@ function openProductForm(type, prodId = null) {
     titleElem.innerText = type === 'game' ? 'افزودن محصول بازی' : 'افزودن محصول مجازی';
     btnElem.innerText = 'افزودن محصول';
 
+    document.getElementById('pImageUrl').value = '';
     document.getElementById('pName').value = '';
     document.getElementById('pOrigPrice').value = '';
     document.getElementById('pOfferPrice').value = '';
@@ -313,9 +360,7 @@ function openProductForm(type, prodId = null) {
 
 window.editProduct = function (id) {
   const prod = currentProducts[id];
-  if (prod) {
-    openProductForm(prod.type, id);
-  }
+  if (prod) openProductForm(prod.type, id);
 };
 
 window.deleteProduct = async function (id) {
@@ -339,7 +384,13 @@ function showProductDetails(id) {
 
   document.getElementById('modalProdTitle').innerText = selectedProduct.name;
   
-  let detailsHtml = `
+  let detailsHtml = '';
+
+  if (selectedProduct.imageUrl) {
+    detailsHtml += `<div style="text-align: center; margin-bottom: 12px;"><img src="${selectedProduct.imageUrl}" style="max-width: 100%; max-height: 180px; border-radius: 12px; object-fit: cover;"></div>`;
+  }
+
+  detailsHtml += `
     <div class="details-row"><span class="details-label">قیمت قبل:</span><span class="details-value" style="text-decoration: line-through;">${selectedProduct.origPrice || '-'}</span></div>
     <div class="details-row"><span class="details-label">قیمت با تخفیف:</span><span class="details-value" style="color: #c084fc;">${selectedProduct.offerPrice}</span></div>
   `;
@@ -358,5 +409,5 @@ function showProductDetails(id) {
 
   document.getElementById('modalProdDetails').innerHTML = detailsHtml;
   openModal('productModal');
-  }
+                      }
       
